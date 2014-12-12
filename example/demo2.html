@@ -85,10 +85,14 @@
 
 <!--页面调用JS库-Zepto  -->
 <script src="../src/zepto.js"></script>
-<script src="../src/QSwipe3.js"></script>
+<script src="../src/QSwipe.js"></script>
 <script type="text/javascript">
     $('.item').QSwipe({
-        mode:"horizontal"
+        mode:"vertical",
+        effect:"scale",
+        onTouchMoveFunc:function(mySwipe){
+            console.dir("mySwipe.distX="+mySwipe.distX+",mySwipe.distY="+mySwipe.distY);
+        }
     });
 </script>
 

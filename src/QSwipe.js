@@ -1,68 +1,45 @@
-﻿/**
- * 将插件封装在一个闭包里面，防止外部代码污染  冲突
- */
-;(function($){
+﻿;(function($){
+    'use strict';
+    $.fn.QSwipe = function(options,callback){
 
-    /**
-     * 定义插件 QSwipe
-     */
-    var QSwipe,qSelector;  //插件的私有方法，也可以看做是插件的工具方法集
-
-    /**
-     * 这里是插件的主体部分
-     * 这里是一个自运行的单例模式。
-     * 这里之所以用QSwipe 的单例模式 主要是为了封装性，更好的划分代码块
-     * 同时 也 方便区分私有方法及公共方法
-     * PS：但有时私有方法为了方便还是写在了QSwipe类里，这时建议私有方法前加上"_"
-     */
-
-    QSwipe = (function () {
-        /**
-         * 插件实例化部分，初始化时调用的代码可以放这里
-         * @param element 传入jq对象的选择器，如 $("#J_plugin").plugin() ,其中 $("#J_plugin") 即是 element
-         * @param options 插件的一些参数神马的
-         * @constructor
-         */
-        function QSwipe(element, options) {
-            'use strict';
-
-            //检测节点
-            if (typeof element === 'undefined') return;
-            //找不到节点就return
-            if (!(element.nodeType)) {
-                if ($(element).length === 0) return;
-            }
-
+        var _this= $(this),
 
             //将插件的默认参数及用户定义的参数合并到一个新的obj里
-            this.settings = $.extend({}, $.fn.QSwipe.defaults, options);
-            //将dom jquery对象赋值给插件，方便后续调用
-            this.elem = $(element);
-
+            _settings = $.extend({}, $.fn.QSwipe.defaults, options),
             //QSwipe ID
-            this.id = (new Date()).getTime();
+            _id = (new Date()).getTime(),
             //是否正在触屏中
-            this.isTouched = false;
+            _isTouched = false,
             //是否正在移动
-            this.isMoving ;
+            _isMoving=false,
+            //index
+            _index=0,
+            _movePenc,
+            //初始化宽高
+            _width=0,
+            _height=0,
             //移动方向
-            this.way="";
-            this.currentEle;
-            this.selector=qSelector;
-            console.dir("ssssss3333s");
+            _way="",
+            _curElement,
+            //选择器
+            _selector=_this.selector,
+            //是否为垂直方向
+            _isV,
+            //过渡方式
+            _transition,
             //兄弟节点
-            this.siblingEle;
+            _siblingElement,
+            _touches,
+            _positions,
+            _bindObj;
+
             //滑屏模式
-            this.isV=this.settings.mode==="vertical";
-            this.transition=this.settings.effect;
-            this.index=0;
-
-            this.height=$(this.elem).height();
-
-            /*=========================
-             Default Flags and vars
-             ===========================*/
-            this.touches = {
+            _isV=_settings.mode==="vertical";
+            _transition=_settings.effect;
+            _movePenc=parseFloat(_settings.movePercent);
+            _width=_this.width();
+            _height=_this.height();
+            _touches = {
                 start: 0,
                 startX: 0,
                 startY: 0,
@@ -70,298 +47,496 @@
                 currentX: 0,
                 currentY: 0
             };
-            this.positions = {
-                start: 0,
-                abs: 0,
-                diff: 0,
-                current: 0
+            _positions = {
+                current: 0,
+                currentX: 0,
+                currentY: 0
             };
 
 
 
 
-            //初始化调用一下
-            this.init();
-            //绑定事件
-            this.addEvtHandler();
+
+        //初始化调用一下
+        _init();
+        //绑定事件
+        _addEvtHandler();
+
+
+        function _init(){
+
+            //初始化样式
+            if(_isV){
+                _this.css({
+                    "-webkit-transform":"translateY(100%)"
+                });
+            }else{
+                _this.css({
+                    "-webkit-transform":"translateX(100%)"
+                });
+            }
+            _this.parent().css({
+                "overflow":"hidden"
+            });
+            _this.css({
+                "overflow":"hidden",
+                "-webkit-backface-visibility":"hidden"
+            });
+            _this.eq(0).css({
+                "-webkit-transform":"translate(0,0)"
+            });
         }
 
-        QSwipe.prototype = {
-
-            init:function(){
-
-            },
-
-            addEvtHandler:function(){
-
-                //传递当前对象
-                var _this=this;
-                var elem=_this.elem;
-
-                //绑定Touch Event
-                elem.on('touchstart', onTouchStart);
-                elem.on('touchmove', onTouchMove);
-                elem.on('touchend', onTouchEnd);
-//                $(document).on('webkitAnimationEnd', function () {
-//                    _this.isMoving = false;
-//
-//                });
+        function _addEvtHandler(){
 
 
-                function onTouchStart(event) {
-                    console.dir("moving="+_this.isMoving  );
-                    if (event.touches.length > 1 || _this.isMoving || _this.isTouched ) {
-                        return;
-                    }
-                    console.dir("moving,noreturn="+_this.isMoving );
+            //绑定Touch Event
+            _this.on('touchstart', onTouchStart);
+            _this.on('touchmove', onTouchMove);
+            _this.on('touchend', onTouchEnd);
+            _this.on('webkitAnimationEnd', function () {
+                _this.isMoving = false;
 
-                    //阻止手势默认事件
-                    //if (event.preventDefault) event.preventDefault();
-
-                    //获取节点坐标
-                    var pageX = event.targetTouches[0].pageX;
-                    var pageY = event.targetTouches[0].pageY;
-
-                    _this.touches.startX = _this.touches.currentX = pageX;
-                    _this.touches.startY = _this.touches.currentY = pageY;
-
-                    _this.touches.start = _this.touches.current = _this.isV ? pageY : pageX;
-                    //console.dir("start" + _this.touches.start);
-                    _this.currentEle=$(event.target);
-
-                    if (!_this.currentEle.is(_this.selector)) {
-                        _this.currentEle = _this.currentEle.parents(_this.selector);
-
-                    }
-
-                    //设置已经触屏
-                    _this.isTouched = true;
+            });
 
 
+            function onTouchStart(event) {
+                if (event.touches.length > 1 || _isMoving || _isTouched ) {
+                    return;
+                }
+
+                //阻止手势默认事件
+                //if (event.preventDefault) event.preventDefault();
+
+                //获取节点坐标
+                var pageX = event.targetTouches[0].pageX;
+                var pageY = event.targetTouches[0].pageY;
+
+                _touches.startX = _touches.currentX = pageX;
+                _touches.startY = _touches.currentY = pageY;
+
+
+                _touches.start = _touches.current = _isV ? pageY : pageX;
+                //console.dir("start" + _touches.start);
+                _curElement=$(event.target);
+
+                if (!_curElement.is(_selector)) {
+                    _curElement = _curElement.parents(_selector);
 
                 }
 
+                //设置已经触屏
+                _isTouched = true;
 
-                function onTouchMove(event){
-                    if (event.touches.length > 1 || !_this.isTouched) {
-                        return;
-                    }
-                    if (event.preventDefault) event.preventDefault();
-
-                    //console.dir("move");
-                    //设置过渡效果
-                    moveTransition(event);
-
+                if(_settings.onTouchStartFunc){
+                    _bindObj={
+                        index:_index,
+                        movePenc:_movePenc,
+                        distX:0,
+                        distY:0
+                    };
+                    _settings.onTouchStartFunc(_bindObj);
                 }
 
-                function moveTransition(event){
-                    var effect=_this.transition;
-                    var sHeight=_this.height;
-                    var dist;
 
-                    switch (effect){
-                        case "none":(function(event){
-                            if(_this.isV){
-                                var pageY = event.targetTouches[0].pageY;
-                                _this.touches.current =  pageY;
-                                //偏移量
-                                dist=_this.positions.current =  pageY-_this.touches.startY;
-
-                                if(dist>0){
-                                    _this.way="down";
-                                    _this.siblingEle =  _this.currentEle.prev(_this.selector) ;
-                                }else if(dist<0){
-                                    _this.way="up";
-                                    _this.siblingEle =  _this.currentEle.next(_this.selector) ;
-                                }else{
-                                    _this.way="";
-                                }
-                                //console.dir("dist="+dist+",way="+_this.way);
-                                if (!_this.siblingEle || _this.siblingEle.size() === 0) {
-                                    _this.isTouched = false;
-                                    return;
-                                }
-
-                                console.dir("setting moving ="+_this.isMoving);
-
-                                console.dir(_this);
-                                _this.isMoving = true;
-                                //console.dir(_this.currentEle);
-                                _this.currentEle.css({
-                                    '-webkit-transition' : 'none',
-                                    '-webkit-transform' : 'translate(0, ' +  _this.positions.current  + 'px)'
-                                });
-
-                                //console.dir(_this.positions.current);
-                                _this.siblingEle.css({
-                                    '-webkit-transition' : 'none',
-                                    '-webkit-transform' : 'translate(0, ' + ( _this.positions.current + (_this.way==="up" ? sHeight : -sHeight)) + 'px)'
-                                });
-
-
-                                //console.dir(_this.positions.current);
-
-                            }
-
-                        })(event);
-                            break;
-                        case "normal":(function(event){
-
-
-                        })();
-                            break;
-                        case "scale":(function(event){
-
-
-                        })();
-                            break;
-                    }
-                }
-
-                function onTouchEnd(event){
-                    if ( !_this.isMoving || !_this.isTouched) {
-                        return;
-                    }
-
-                    moveEndTransition(event);
-                    _this.isTouched = false;
-
-                }
-
-                function moveEndTransition(event){
-                    var effect=_this.transition;
-                    switch (effect){
-                        case "none":(function(event){
-                            if(_this.isV){
-                                if(_this.way===""){
-                                    return;
-                                }
-                                _this.currentEle.css({
-                                    '-webkit-transition' : '-webkit-transform 0.4s ease-out',
-                                    '-webkit-transform' : 'translate(0, ' + (_this.way==="up" ? '-' : '') + '100%)'
-
-                                }).one('webkitTransitionEnd', function () {
-
-                                    $(this).css({
-                                        '-webkit-transform' : 'translate(0, ' + (_this.way==="up" ? '-' : '') + '100%)'
-                                    });
-                                    //console.dir($(this));
-                                    //_this.isMoving = false;
-                                    _this.currentEle = null;
-                                    _this.siblingEle = null;
-                                });
-
-                                _this.siblingEle.css({
-                                    '-webkit-transition' : '-webkit-transform 0.4s ease-out',
-                                    '-webkit-transform' : 'translate(0, 0)'
-                                }).one('webkitTransitionEnd', function () {
-                                    $(_this.selector).removeClass(_this.settings.activeClass);
-                                    var el = $(this);
-                                    el.addClass(_this.settings.activeClass);
-
-                                });
-
-                            }
-
-                        })(event);
-                            break;
-                        case "normal":(function(event){
-
-
-                        })();
-                            break;
-                        case "scale":(function(event){
-
-
-                        })();
-                            break;
-                    }
-                }
-
-            },
-
-            _callFunc:function (e) {
-                // 调用 “_draw”开头的的功能函数
-                if (this[func]) { this[func].apply(this, [e]); }
-
-                // 调用回调函数
-                if (this.options['draw' + canvasEvent]) { this.options['_draw' + canvasEvent].apply(this, [e]); }
 
 
             }
 
 
+            function onTouchMove(event){
+                if (event.touches.length > 1 || !_isTouched) {
+                    return;
+                }
+                if (event.preventDefault) event.preventDefault();
+                //设置过渡效果
+                moveTransition(event);
 
-        };
+                if(_settings.onTouchMoveFunc){
+                    _bindObj={
+                        index:_index,
+                        movePenc:_movePenc,
+                        distX:_positions.currentX,
+                        distY:_positions.currentY
+                    };
+                    _settings.onTouchMoveFunc(_bindObj);
+                }
 
-
-
-        return QSwipe;
-
-    })();
-
-
-
-
-    /**
-     * 插件的私有方法
-     */
-    privateMethod = function () {
-
-    };
-
-    /**
-     * 这里是将QSwipe对象 转为zepto插件的形式进行调用
-     * 定义一个插件 QSwipe
-     * zepto的data方法与jq的data方法不同
-     * 这里的实现方式可参考文章：http://trentrichardson.com/2013/08/20/creating-zepto-plugins-from-jquery-plugins/
-     */
-
-    $.fn.QSwipe = function(options,callback){
-        qSelector=$(this).selector;
-
-        return this.each(function () {
-            var $this = $(this),
-                instance = $.fn.QSwipe.lookup[$this.data('QSwipe')];
-            if (!instance) {
-                //zepto的data方法只能保存字符串，所以用此方法解决一下
-                $.fn.QSwipe.lookup[++$.fn.QSwipe.lookup.i] = new QSwipe(this,options,callback);
-                $this.data('QSwipe', $.fn.QSwipe.lookup.i);
-                instance = $.fn.QSwipe.lookup[$this.data('QSwipe')];
             }
 
-            if (typeof options === 'string') instance[options]();
-        });
+            function moveTransition(event){
+                var effect=_transition;
+                var sHeight=_height;
+
+                var currentVal=0;
+                _touches.currentX =  event.targetTouches[0].pageX;
+                _touches.currentY =  event.targetTouches[0].pageY;
+
+                _positions.currentX=_touches.currentX-_touches.startX;
+                _positions.currentY=_touches.currentY-_touches.startY;
+
+                //是否为垂直方向滑屏
+                if(_isV){
+                    _touches.current =  _touches.currentY;
+                    currentVal =  _positions.currentY;
+                }else{
+                    _touches.current =  _touches.currentX;
+                    currentVal =  _positions.currentX;
+                }
+                _positions.current=currentVal;
+
+                switch (effect){
+                    case "none":(function(event){
 
 
-//        document.addEventListener('touchmove', function (evt) {
-//            evt.preventDefault();
-//        });
+
+                    })(event);
+                        break;
+                    case "normal":(function(event){
+
+                        moveWithNormalEffect(_isV,currentVal,event);
+
+                    })(event);
+                        break;
+                    case "scale":(function(event){
+
+                        moveWithScaleEffect(_isV,currentVal,event);
+
+                    })(event);
+                        break;
+                }
+            }
+
+            function moveWithNormalEffect(isV,current,event){
+                //偏移量
+                var dist=_positions.current =  current;
+
+                if(dist>0){
+                    _way=_isV?"down":"right";
+                    _siblingElement =  _curElement.prev(_selector) ;
+                }else if(dist<0){
+                    _way=isV?"up":"left";
+                    _siblingElement =  _curElement.next(_selector) ;
+                }else{
+                    _way="";
+                }
+                if (!_siblingElement || _siblingElement.size() === 0) {
+                    _isTouched = false;
+                    return;
+                }
+
+
+                var curTransformVal,
+                    sibTransformVal;
+
+                if(_way==="up"){
+                    curTransformVal="translate(0,"+dist+"px)";
+                    sibTransformVal="translate(0,"+(dist+_height)+"px)";
+                }else if(_way==="down"){
+                    curTransformVal="translate(0,"+dist+"px)";
+                    sibTransformVal="translate(0,"+(dist-_height)+"px)";
+                }else if(_way=="left"){
+                    curTransformVal="translate("+dist+"px,0)";
+                    sibTransformVal="translate("+(dist+_width)+"px,0)";
+                }else{
+                    curTransformVal="translate("+dist+"px,0)";
+                    sibTransformVal="translate("+(dist-_width)+"px,0)";
+                }
+
+                _isMoving = true;
+
+
+                _curElement.css({
+                    '-webkit-transition' : 'none',
+                    '-webkit-transform' : curTransformVal
+                });
+
+                _siblingElement.css({
+                    '-webkit-transition' : 'none',
+                    '-webkit-transform' : sibTransformVal
+                });
+
+
+            }
+
+
+            function moveWithScaleEffect(isV,current,event){
+                //偏移量
+                var dist=_positions.current =  current;
+
+                if(dist>0){
+                    _way=_isV?"down":"right";
+                    _siblingElement =  _curElement.prev(_selector) ;
+                }else if(dist<0){
+                    _way=isV?"up":"left";
+                    _siblingElement =  _curElement.next(_selector) ;
+                }else{
+                    _way="";
+                }
+                if (!_siblingElement || _siblingElement.size() === 0) {
+                    _isTouched = false;
+                    return;
+                }
+
+
+                var curTransformVal,
+                    sibTransformVal,
+                    transOrigin;
+
+                if(_way==="up"){
+                    curTransformVal="scale(" + (1 - Math.abs(dist / _height)) + ")";
+                    sibTransformVal="translate(0,"+(dist+_height)+"px)";
+                    transOrigin="50% 0%";
+                }else if(_way==="down"){
+                    curTransformVal= curTransformVal="scale(" + (1 - Math.abs(dist / _height)) + ")";
+                    sibTransformVal="translate(0,"+(dist-_height)+"px)";
+                    transOrigin="50% 100%";
+                }else if(_way=="left"){
+                    curTransformVal= curTransformVal="scale(" + (1 - Math.abs(dist / _height)) + ")";
+                    sibTransformVal="translate("+(dist+_width)+"px,0)";
+                    transOrigin="0% 50%";
+                }else{
+                    curTransformVal="scale(" + (1 - Math.abs(dist / _height)) + ")";
+                    sibTransformVal="translate("+(dist-_width)+"px,0)";
+                    transOrigin="100% 50%";
+                }
+
+                _isMoving = true;
+
+
+                _curElement.css({
+                    '-webkit-transition' : 'none',
+                    '-webkit-transform' : curTransformVal,
+                    '-webkit-transform-origin' : transOrigin
+                });
+
+                _siblingElement.css({
+                    '-webkit-transition' : 'none',
+                    '-webkit-transform' : sibTransformVal
+                });
+
+
+            }
+
+
+            function onTouchEnd(event){
+                if ( !_isMoving || !_isTouched) {
+                    return;
+                }
+
+                moveEndTransition(event);
+                _isTouched = false;
+
+                if(_settings.onTouchEndFunc){
+                    _bindObj={
+                        index:_index,
+                        movePenc:_movePenc,
+                        dist:_positions.current
+                    };
+                    _settings.onTouchEndFunc(_bindObj);
+                }
+
+            }
+
+
+            function endWithNormalEffect(){
+                if(_way===""){
+                    return;
+                }
+
+                var curTransformVal,
+                    sibTransformVal;
+                var totalRange=_isV?_height:_width;
+                //console.dir(Math.abs(_positions.current)/totalRange);
+                //console.dir(_movePenc);
+                if(Math.abs(_positions.current)/totalRange<_movePenc){
+                    if(_way==="up") {
+                        curTransformVal = "translate(0, 0)";
+                        sibTransformVal="translate(0, 100%)";
+                    }else if(_way==="down") {
+                        curTransformVal = "translate(0, 0)";
+                        sibTransformVal="translate(0,-100%)";
+                    }else if(_way==="left") {
+                        curTransformVal = "translate(0, 0)";
+                        sibTransformVal="translate(100%,0)";
+                    }else if(_way==="right") {
+                        curTransformVal = "translate(0, 0)";
+                        sibTransformVal="translate(-100%,0)";
+                    }
+
+                }else{
+                    if(_way==="up"){
+                        curTransformVal="translate(0,-100%)";
+                        sibTransformVal="translate(0, 0)";
+                        _index++;
+                    }else if(_way==="down"){
+                        curTransformVal="translate(0,100%)";
+                        sibTransformVal="translate(0, 0)";
+                        _index--;
+                    }else if(_way=="left"){
+                        curTransformVal="translate(-100%,0)";
+                        sibTransformVal="translate(0, 0)";
+                        _index++;
+                    }else{
+                        curTransformVal="translate(100%,0)";
+                        sibTransformVal="translate(0, 0)";
+                        _index--;
+                    }
+                }
+
+
+                //console.dir(_index);
+                _curElement.css({
+                    '-webkit-transition' : '-webkit-transform 0.4s ease-out',
+                    '-webkit-transform' : curTransformVal
+
+                }).one('webkitTransitionEnd', function () {
+
+                    $(this).css({
+                        '-webkit-transform' : curTransformVal
+                    });
+                    //console.dir($(this));
+                    _isMoving = false;
+                    _curElement = null;
+                    _siblingElement = null;
+                });
+
+                _siblingElement.css({
+                    '-webkit-transition' : '-webkit-transform 0.4s ease-out',
+                    '-webkit-transform' :sibTransformVal
+                }).one('webkitTransitionEnd', function () {
+                    $(_selector).removeClass(_settings.activeClass);
+                    var el = $(this);
+                    el.addClass(_settings.activeClass);
+
+                });
+            }
+
+            function endWithScaleEffect(){
+                if(_way===""){
+                    return;
+                }
+
+                var curTransformVal,
+                    sibTransformVal,
+                    transOrigin;
+                var totalRange=_isV?_height:_width;
+
+                if(Math.abs(_positions.current)/totalRange<_movePenc){
+                    if(_way==="up") {
+                        curTransformVal = "translate(0, 0)";
+                        sibTransformVal="translate(0, 100%) scale(1)";
+                        transOrigin="50% 0%";
+                    }else if(_way==="down") {
+                        curTransformVal = "translate(0, 0)";
+                        sibTransformVal="translate(0,-100%) scale(1)";
+                        transOrigin="50% 100%";
+                    }else if(_way==="left") {
+                        curTransformVal = "translate(0, 0)";
+                        sibTransformVal="translate(100%,0) scale(1)";
+                        transOrigin="100% 50%";
+                    }else if(_way==="right") {
+                        curTransformVal = "translate(0, 0)";
+                        sibTransformVal="translate(-100%,0) scale(1)";
+                        transOrigin="0% 50%";
+                    }
+
+                }else{
+                    if(_way==="up"){
+                        curTransformVal="scale(0)";
+                        sibTransformVal="translate(0, 0)";
+                        transOrigin="50% 0%";
+                        _index++;
+                    }else if(_way==="down"){
+                        curTransformVal="scale(0)";
+                        sibTransformVal="translate(0, 0)";
+                        transOrigin="50% 100%";
+                        _index--;
+                    }else if(_way=="left"){
+                        curTransformVal="translate(-100%,0)";
+                        sibTransformVal="translate(0, 0)";
+                        transOrigin="0% 50%";
+                        _index++;
+                    }else{
+                        curTransformVal="translate(100%,0)";
+                        sibTransformVal="translate(0, 0)";
+                        transOrigin="100% 50%";
+                        _index--;
+                    }
+                }
+
+
+                //console.dir(_index);
+                _curElement.css({
+                    '-webkit-transition' : '-webkit-transform 0.4s ease-out',
+                    '-webkit-transform' : curTransformVal,
+                    '-webkit-transform-origin':transOrigin
+
+                }).one('webkitTransitionEnd', function () {
+
+                    $(this).css({
+                        '-webkit-transform' : curTransformVal
+                    });
+                    //console.dir($(this));
+                    _isMoving = false;
+                    _curElement = null;
+                    _siblingElement = null;
+                });
+
+                _siblingElement.css({
+                    '-webkit-transition' : '-webkit-transform 0.4s ease-out',
+                    '-webkit-transform' :sibTransformVal
+                }).one('webkitTransitionEnd', function () {
+                    $(_selector).removeClass(_settings.activeClass);
+                    var el = $(this);
+                    el.addClass(_settings.activeClass);
+
+                });
+            }
+
+            function moveEndTransition(event){
+                var effect=_transition;
+                switch (effect){
+                    case "none":(function(event){
+
+
+                    })(event);
+                        break;
+                    case "normal":(function(event){
+                        endWithNormalEffect();
+
+                    })(event);
+                        break;
+                    case "scale":(function(event){
+                        endWithScaleEffect();
+
+                    })();
+                        break;
+                }
+            }
+
+
+
+        }
+
     }
-
-    $.fn.QSwipe.lookup = {i: 0};
 
     /**
      * 插件的默认值
      */
     $.fn.QSwipe.defaults = {
         mode: 'vertical',
+        //移动屏幕百分比
+        movePercent:"0.2",
         speed: '300',
         //激活动画样式名
         activeClass:"play",
         //外层父标签样式名
         wrapper:".wrap",
         //默认没有过度动画
-        effect:"none"
+        effect:"normal"
     };
 
-    /**
-     * 优雅处： 通过data-xxx 的方式 实例化插件。
-     * 这样的话 在页面上就不需要显示调用了。
-     * 可以查看bootstrap 里面的JS插件写法
-     */
-    $(function () {
-        return new QSwipe($('[data-QSwipe]'));
-    });
 
-})(window.jQuery || window.Zepto || window.$);
+
+})(window.Zepto || window.jQuery);
