@@ -52,6 +52,10 @@
                 currentX: 0,
                 currentY: 0
             };
+             _bindObj={
+                width:_width,
+                height:_height
+             };
 
 
 
@@ -131,7 +135,7 @@
                 if(_settings.onTouchStartFunc){
                     _bindObj={
                         index:_index,
-                        movePenc:_movePenc,
+                        movePenc:Math.abs(_positions.current)/totalRang,
                         distX:0,
                         distY:0
                     };
@@ -155,7 +159,7 @@
                 if(_settings.onTouchMoveFunc){
                     _bindObj={
                         index:_index,
-                        movePenc:_movePenc,
+                        movePenc:Math.abs(_positions.current)/totalRang,
                         distX:_positions.currentX,
                         distY:_positions.currentY
                     };
@@ -330,8 +334,9 @@
                 if(_settings.onTouchEndFunc){
                     _bindObj={
                         index:_index,
-                        movePenc:_movePenc,
-                        dist:_positions.current
+                        movePenc:Math.abs(_positions.current)/totalRang,
+                        distX:_positions.currentX,
+                        distY:_positions.currentX
                     };
                     _settings.onTouchEndFunc(_bindObj);
                 }
@@ -528,11 +533,10 @@
         mode: 'vertical',
         //移动屏幕百分比
         movePercent:"0.2",
-        speed: '300',
+        //过渡时间
+        inter: '300',
         //激活动画样式名
         activeClass:"play",
-        //外层父标签样式名
-        wrapper:".wrap",
         //默认没有过度动画
         effect:"normal"
     };
