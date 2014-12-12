@@ -288,15 +288,15 @@
                     sibTransformVal="translate(0,"+(dist+_height)+"px)";
                     transOrigin="50% 0%";
                 }else if(_way==="down"){
-                    curTransformVal= curTransformVal="scale(" + (1 - Math.abs(dist / _height)) + ")";
+                    curTransformVal="scale(" + (1 - Math.abs(dist / _height)) + ")";
                     sibTransformVal="translate(0,"+(dist-_height)+"px)";
                     transOrigin="50% 100%";
-                }else if(_way=="left"){
-                    curTransformVal= curTransformVal="scale(" + (1 - Math.abs(dist / _height)) + ")";
+                }else if(_way==="left"){
+                    curTransformVal="scale(" + (1 - Math.abs(dist / _width)) + ")";
                     sibTransformVal="translate("+(dist+_width)+"px,0)";
                     transOrigin="0% 50%";
                 }else{
-                    curTransformVal="scale(" + (1 - Math.abs(dist / _height)) + ")";
+                    curTransformVal="scale(" + (1 - Math.abs(dist / _width)) + ")";
                     sibTransformVal="translate("+(dist-_width)+"px,0)";
                     transOrigin="100% 50%";
                 }
@@ -453,12 +453,12 @@
                         transOrigin="50% 100%";
                         _index--;
                     }else if(_way=="left"){
-                        curTransformVal="translate(-100%,0)";
+                        curTransformVal="scale(0)";
                         sibTransformVal="translate(0, 0)";
                         transOrigin="0% 50%";
                         _index++;
                     }else{
-                        curTransformVal="translate(100%,0)";
+                        curTransformVal="scale(0)";
                         sibTransformVal="translate(0, 0)";
                         transOrigin="100% 50%";
                         _index--;
