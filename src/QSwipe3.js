@@ -34,7 +34,7 @@
             _bindObj,
             _canElemMove,
             _container,
-            _size;
+            _tempTElem;
 
             //滑屏模式
             _isV=_settings.mode==="vertical";
@@ -43,7 +43,6 @@
             _width=_this.width();
             _height=_this.height();
             _container=_this.parent();
-            _size=_this.size();
             _touches = {
                 start: 0,
                 startX: 0,
@@ -104,10 +103,6 @@
             _this.on('webkitAnimationEnd', function () {
                 _this.isMoving = false;
 
-            });
-
-            $(document).on('touchmove', function (evt) {
-                evt.preventDefault();
             });
 
 
@@ -179,7 +174,6 @@
             function moveTransition(event){
                 var effect=_transition;
 
-                //初始化坐标位置
                 var currentVal= 0,siblingVal=0;
                 _touches.currentX =  event.targetTouches[0].pageX;
                 _touches.currentY =  event.targetTouches[0].pageY;
@@ -236,16 +230,10 @@
                         siblingVal= currentVal;
                         moveWithCubeInTran(event,currentVal,siblingVal);
                     })(event);
-                        break; 
-                    case "cubeout":(function(event){
-                        siblingVal= currentVal;
-                        moveWithCubeOutTran(event,currentVal,siblingVal);
-                    })(event);
-                        break;            
+                        break;        
                 }
             }
 
-            //重置 获取 当前节点和切换的节点内容
             function refreshElement(currentVal,initPos){
                 //偏移量
                 var dist=_positions.current =  currentVal;
@@ -260,7 +248,6 @@
                 if (!_siblingElement || _siblingElement.size() === 0) {
                     _isMoving=false;
                     _isTouched = false;
-                    //重置节点，复原位置
                     if(initPos){
                         initPos();
                     }
@@ -306,7 +293,6 @@
                 }
             }
 
-            // "normal" 转场效果主功能入口
             function moveWithNormalTran(event,currentVal,siblingVal){
 
 
@@ -345,7 +331,7 @@
 
             }
 
-            // "scale" 转场效果主功能入口
+
             function moveWithScaleTran(event,currentVal,siblingVal){
                 var dist=refreshElement(currentVal,initPos);
 
@@ -372,17 +358,15 @@
                     transOrigin="100% 50%";
                 }
 
-                //设置为正在移动
                 _isMoving = true;
 
-                //设置当前节点样式
+
                 _curElement.css({
                     '-webkit-transition' : 'none',
                     '-webkit-transform' : curTransformVal,
                     '-webkit-transform-origin' : transOrigin
                 });
 
-                //设置切换节点样式
                 _siblingElement.css({
                     '-webkit-transition' : 'none',
                     '-webkit-transform' : sibTransformVal
@@ -391,10 +375,9 @@
 
             }
 
-
-            // "fade" 转场效果主功能入口
             function moveWithFadeTran(event,currentVal,siblingVal){
-                //在 "normal"转场效果基础上增加透明度变化
+
+
                 moveWithNormalTran(event,currentVal,siblingVal);
                 var totalRange;
                 if(_isV){
@@ -402,6 +385,7 @@
                 }else{
                     totalRange=parseFloat(Math.abs(currentVal)/_width);
                 };
+    
                 //正在触屏中
                 if(_isTouched){
                     _curElement.css({
@@ -411,20 +395,21 @@
                         'opacity' : Math.min(1,totalRange*2)
                     });
                 }
+                
+                
 
             }
 
-            // "ease" 转场效果主功能入口
             function moveWithEaseTran(event,currentVal,siblingVal){
-                //在 "normal"转场效果基础上增加透明度变化
+
                 moveWithNormalTran(event,currentVal*0.6,siblingVal);
                 _curElement.css({
                     'z-index':"999"
                 });
             }
 
-            // "bounce" 转场效果主功能入口
             function moveWithBounceTran(event,currentVal,siblingVal){
+
                 //偏移量
                 var dist=refreshElement(currentVal,initPos);
 
@@ -450,11 +435,10 @@
                     curTransformVal="scale(" + sceVal + ")";
                      sibTransformVal="translate("+(dist-_width)+"px,0)";
                 }
-
-                //设置为正在移动
+                
+               
                 _isMoving = true;
 
-                //设置当前节点样式
                 _curElement.css({
                     '-webkit-transition' : 'none',
                     '-webkit-transform':curTransformVal,
@@ -462,7 +446,6 @@
                     'z-index':"9"
                 });
 
-                //设置切换节点样式
                 _siblingElement.css({
                     '-webkit-transition' : 'none',
                     '-webkit-transform' : sibTransformVal,
@@ -474,7 +457,6 @@
 
             }
 
-            // "rotate" 转场效果辅助功能入口
             function rotatingEffect(rotatingVal,opaVal,currentVal,siblingVal){
                 var curTransformVal,sibTransformVal,transOrigin;
 
@@ -518,7 +500,6 @@
             }
 
 
-            // "gule" 转场效果主功能入口
             function moveWithGuleTran(event,currentVal,siblingVal){
                 var dist=refreshElement(currentVal,initPos);
                 if(!dist){   return;}
@@ -549,25 +530,13 @@
 
             }
 
-            // "cubeout" 转场效果辅助功能入口
-            function moveWithCubeOutTran(event,currentVal,siblingVal){
-                var dist=refreshElement(currentVal,initPos);
-                if(!dist){   return;}
+            function cubingEffect(cubingVal,opaVal,currentVal,siblingVal){
                 var curTransformVal,sibTransformVal,curTransOrigin,sibTransOrigin;
-                var cubingVal,opaVal,totalPenc;
-                if(_isV){
-                    totalPenc=Math.abs(dist)/_height;
-                }else{
-                    totalPenc=Math.abs(dist)/_width;
-                }
-                cubingVal=totalPenc*90;
-                opaVal=Math.min(totalPenc,0.8);
-                _isMoving = true;
 
                 if(_way==="up"){
                     sibTransOrigin="50% 0%";
                     curTransOrigin="50% 100%";
-                    sibTransformVal= "translate(0,"+(_height+siblingVal)+"px)"
+                    sibTransformVal= "translate(0,"+(_height+siblingVal)+"px) rotateX(" + (cubingVal-90) + "deg)"
                     curTransformVal="translate(0,"+(currentVal)+"px)  rotateX(" + cubingVal + "deg)";
                 }else if(_way==="down"){
                     sibTransOrigin="50% 100%";
@@ -577,25 +546,40 @@
                 }else if(_way=="left"){
                     sibTransOrigin="0% 50%";
                     curTransOrigin="100% 50%";
-                    sibTransformVal= "translate("+(_width+siblingVal)+"px,0)"
+                    sibTransformVal= "translate("+(_width+siblingVal)+"px,0) rotateY(" + (90-cubingVal) + "deg)"
                     curTransformVal="translate("+(currentVal)+"px,0)  rotateY(" + (-cubingVal) + "deg)"; 
                 }else if(_way=="right"){
                     sibTransOrigin="100% 50%";
                     curTransOrigin="0% 50%";
-                    sibTransformVal= "translate("+(siblingVal-_width)+"px,0)"
+                    sibTransformVal= "translate("+(siblingVal-_width)+"px,0) rotateY(" + (cubingVal-90) + "deg)"
                     curTransformVal="translate("+(currentVal)+"px,0)  rotateY(" + (cubingVal) + "deg)"; 
                 }
 
-                //初始化节点移动的位置
-                restMovePos();
-                // cubingEffect(cubingVal,opaVal,currentVal,siblingVal);
 
-                //外层设置 perspective 以便实现3D旋转
                 _container.css({
                     "position": "relative",
                     "-webkit-perspective": "1200px"
                 });
 
+                //页面
+                if(_way==="up"){
+                    _this.css({
+                            '-webkit-transform':"translate(0,-100%) rotateY(-90deg)"
+                    });
+                }else if(_way==="down"){
+                    _this.css({
+                            '-webkit-transform':"translate(0,100%) rotateY(-90deg)"
+                    });
+                }else if(_way==="left"){
+                    _this.css({
+                            '-webkit-transform':"translate(-100%,0) rotateY(90deg)"
+                    });
+                }else if(_way==="right"){
+                    _this.css({
+                            '-webkit-transform':"translate(100%,0) rotateY(-90deg)"
+                    });
+                }
+                
 
                 _curElement.css({
                     '-webkit-transition' : 'none',
@@ -604,7 +588,6 @@
                     'transform-style': "preserve-3d",
                     "z-index":"999",
                     'opacity' : "1"
-                    
                 });
 
                 _siblingElement.css({
@@ -613,41 +596,71 @@
                     '-webkit-transform-origin' : sibTransOrigin,
                     "z-index":"9",
                     'opacity' : Math.max(1-opaVal,0.6)
-                    
                 });
 
+
             }
 
-            //初始化节点的主功能入口
-            function restMovePos(){
+
+            function initCubePos(){
                 if(_way==="up"){
-                    loopIndexChk("translate(0,-100%)","translate(0,100%)");
+                    _this.css({
+                        "-webkit-transform":"translate(0,-100%)"
+                    });
+                    _curElement.css({
+                        "-webkit-transform":"translate(0,0)"
+                    });
 
                 }else if(_way==="down"){
-                    loopIndexChk("translate(0,-100%) rotateX(-90deg)","translate(0,100%)");
+                    _this.css({
+                        "-webkit-transform":"translate(0,100%)"
+                    });
+                    _curElement.css({
+                        "-webkit-transform":"translate(0,0)"
+                    });
 
                 }else if(_way==="left"){
-                    loopIndexChk("translate(-100%,0)","translate(100%,0)");
+                    _this.css({
+                        "-webkit-transform":"translate(-100%,0)"
+                    });
+                    _curElement.css({
+                        "-webkit-transform":"translate(0,0)"
+                    });
+
                 }else if(_way==="right"){
-                    loopIndexChk("translate(-100%,0)","translate(100%,0)");
-                }
-            }
-
-            //循环查询节点，并设置 transform
-            function loopIndexChk(tval_1,tval_2){
-                for(var i=0;i<_size;i++){
-                    if(i<_index){
-                        _this.eq(i).css({'-webkit-transform':tval_1});
-                    }else if(i>_index){
-                        _this.eq(i).css({'-webkit-transform':tval_2});
-                    }else{
-                        continue;
-                    }
+                    _this.css({
+                        "-webkit-transform":"translate(100%,0)"
+                    });
+                    _curElement.css({
+                        "-webkit-transform":"translate(0,0)"
+                    });
 
                 }
             }
 
-            //触屏结束时出发转场效果
+            function moveWithCubeInTran(event,currentVal,siblingVal){
+                var dist=refreshElement(currentVal,initPos);
+                if(!dist){   return;}
+                
+                var cubingVal,guleVal,opaVal,totalPenc;
+                if(_isV){
+                    totalPenc=Math.abs(dist)/_height;
+                }else{
+                    totalPenc=Math.abs(dist)/_width;
+                }
+                cubingVal=totalPenc*90;
+                opaVal=Math.min(totalPenc,0.8);
+                _isMoving = true;
+                cubingEffect(cubingVal,opaVal,currentVal,siblingVal);
+
+                
+
+            }
+
+            
+
+
+
             function onTouchEnd(event){
                 if ( !_isMoving || !_isTouched) {
                     return;
@@ -669,7 +682,6 @@
             }
 
 
-            // "normal" 触屏结束时转场效果功能入口
             function endWithNormalTran(){
                 var curTransformVal,
                     sibTransformVal;
@@ -711,7 +723,7 @@
                     }
                 }
 
-
+                //console.dir(_index);
                 _curElement.css({
                     '-webkit-transition' : '-webkit-transform 0.4s ease-out,opacity 0.4s ease-out',
                     '-webkit-transform' : curTransformVal
@@ -744,16 +756,16 @@
                 }
 
                 
+
+                
             }
 
-            // "scale" 触屏结束时转场效果功能入口
             function endWithScaleTran(){
 
                 var curTransformVal,
                     sibTransformVal,
                     transOrigin;
                 var totalRange=_isV?_height:_width;
-                //是否已经达到指定的触屏比例
                 _canElemMove=Math.abs(_positions.current)/totalRange>_movePenc?true:false;
                 if(!_canElemMove){
                     if(_way==="up") {
@@ -827,7 +839,6 @@
                 });
             }
 
-            // "fade" 触屏结束时转场效果功能入口
             function endWithFadeTran(){
                 endWithNormalTran();
                 var totalRange=_isV?_height:_width,_canElemMove;
@@ -855,7 +866,6 @@
                 
             }
 
-            // "ease" 触屏结束时转场效果功能入口
             function endWithEaseTran(){
                 endWithNormalTran();
 
@@ -869,7 +879,6 @@
                 });
             }
 
-            // "bounce" 触屏结束时转场效果功能入口
             function endWithBounceTran(){
                 endWithNormalTran();
                 var totalRange=_isV?_height:_width,
@@ -908,7 +917,6 @@
                 _siblingElement.css(sibElemStyle);
             }
 
-            // "gule" 触屏结束时转场效果功能入口
             function endWithGuleTran(){
                 endWithNormalTran();
                 var totalRange=_isV?_height:_width,
@@ -945,7 +953,6 @@
                 _siblingElement.css(sibElemStyle);
             }
 
-            // "cube" 触屏结束时转场效果功能入口
             function endWithCubeTran(){
                 endWithNormalTran();
                 var totalRange=_isV?_height:_width,
@@ -954,25 +961,29 @@
                 if(_canElemMove){
 
 
+                    curElemStyle={
+                        "opacity":"0",
+                        "transition-timing-function":"ease"
+                    };
+
+                    sibElemStyle={
+                        "-webkit-transform":  "translateY(0) rotateX(0deg) ",
+                        "opacity":1,
+                        "transition-timing-function":"ease"
+                    }
+
                     
                     if(_way==="up"){
                         curElemStyle={
                             "-webkit-transform": "translateY(-100%) rotateX(90deg) ",
-                            "opacity":"0",
-                            "z-index":"9",
-                            "transition-timing-function":"ease" 
-                        };
-                        sibElemStyle={
-                            "-webkit-transform":  "translateY(0) rotateX(0deg) ",
-                            "opacity":"1",
-                            "transition-timing-function":"ease"
+                            "z-index":"9" 
                         };
                     }else if(_way==="down"){
                         
                         curElemStyle={
                             "-webkit-transform": "translateY(100%) rotateX(-90deg) ",
                             "z-index":"999" ,
-                            "opacity":"0"
+                            "opacity":0
                         };
                         sibElemStyle={
                             "z-index":"9",
@@ -1000,19 +1011,19 @@
                     }
                     if(_way==="up"){
                         sibElemStyle={
-                            "-webkit-transform":  "translate3d(0,100%,0) "
+                            "-webkit-transform":  "translate3d(0,100%,0) rotateX(-90deg)"
                         }
                     }else if(_way==="down"){
                         sibElemStyle={
-                            "-webkit-transform":  "translate3d(0,-100%,0) "
+                            "-webkit-transform":  "translate3d(0,-100%,0) rotateX(90deg)"
                         }
                     }else if(_way==="left"){
                         sibElemStyle={
-                            "-webkit-transform":  "translate3d(100%,0,0) "
+                            "-webkit-transform":  "translate3d(100%,0,0) rotateY(90deg)"
                         }
                     }else if(_way==="right"){
                         sibElemStyle={
-                            "-webkit-transform":  "translate3d(-100%,0,0) "
+                            "-webkit-transform":  "translate3d(-100%,0,0) rotateY(-90deg)"
                         }
                     }
                     
@@ -1025,90 +1036,7 @@
 
             }
 
-            // "cubeout" 触屏结束时转场效果功能入口
-            function endWithCubeOutTran(){
-                endWithNormalTran();
-                var totalRange=_isV?_height:_width,
-                    curElemStyle,sibElemStyle;
-                _canElemMove=Math.abs(_positions.current)/totalRange>_movePenc?true:false;
-                if(_canElemMove){
 
-
-                    curElemStyle={
-                        "opacity":"0",
-                        "transition-timing-function":"ease"
-                    };
-
-                    sibElemStyle={
-                        "-webkit-transform":  "translateY(0) rotateX(0deg) ",
-                        "opacity":1,
-                        "transition-timing-function":"ease"
-                    }
-
-                    
-                    if(_way==="up"){
-                        curElemStyle={
-                            "-webkit-transform": "translateY(-100%) rotateX(90deg) ",
-                            "z-index":"9",
-                            "opacity":"0" 
-                        }
-                    }else if(_way==="down"){
-                        
-                        curElemStyle={
-                            "-webkit-transform": "translateY(100%) rotateX(-90deg) ",
-                            "z-index":"9",
-                            "opacity":"0" 
-                        };
-                       
-                    }else if(_way==="left"){
-                        curElemStyle={
-                            "-webkit-transform": "translateX(-100%) rotateY(-90deg)",
-                            "z-index":"9",
-                            "opacity":"0" 
-                        };
-                    }else if(_way==="right"){
-                        curElemStyle={
-                            "-webkit-transform": "translateX(100%)  rotateY(90deg)",
-                            "z-index":"9",
-                            "opacity":"0" 
-                        };
-                    }
-                    
-                    
-                    
-                }else{
-                        sibElemStyle={
-                            "z-index":"1"
-                        }
-                    if(_way==="up"){
-                        sibElemStyle={
-                            "-webkit-transform":  "translate3d(0,100%,0) ",
-                            "z-index":"1"
-                        }
-                    }else if(_way==="down"){
-                        sibElemStyle={
-                            "-webkit-transform":  "translate3d(0,-100%,0) rotateX(90deg)",
-                            "z-index":"1"
-                        }
-                    }else if(_way==="left"){
-                        sibElemStyle={
-                            "-webkit-transform":  "translate3d(100%,0,0)"
-                        }
-                    }else if(_way==="right"){
-                        sibElemStyle={
-                            "-webkit-transform":  "translate3d(-100%,0,0) rotateY(90deg)"
-                        }
-                    }
-                    
-                    
-                }
-
-                _curElement.css(curElemStyle);
-
-                _siblingElement.css(sibElemStyle);
-            }
-
-            // 定义触屏结束时 某个转场效果对应的功能入口
             function moveEndTransition(event){
                 var effect=_transition;
                 switch (effect){
@@ -1143,13 +1071,11 @@
                     case "cubein":(function(event){
                         endWithCubeTran();
                     })();
-                        break;  
-                    case "cubeout":(function(event){
-                        endWithCubeOutTran();
-                    })();
-                        break;            
+                        break;        
                 }
             }
+
+
 
         }
 

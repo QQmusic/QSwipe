@@ -6,17 +6,13 @@
 <meta name="format-detection" content="telephone=no" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 <link rel="stylesheet" href="style/index.css" />
-<style type="text/css">
-.item{-webkit-transform:translateX(100%);}
-.item-0 {-webkit-transform: translateX(0);}
-</style>
 </head>
 <body>
 <div id="wrap"><div id="loading"><div style="width: 50%;"></div></div></div>
 
 <div class="wrap">
     <div class="item item-0">
-        <div class="box" style="background:#cc0c39; ">
+        <div class="box">
             <h2>页面一</h2>
         </div>
         <!--可自定义背景图-->
@@ -24,7 +20,7 @@
     </div>
 
     <div class="item item-1">
-        <div class="box" style="background:#ed9761; ">
+        <div class="box" >
             <h2>页面二</h2>
         </div>
         <!--可自定义背景图-->
@@ -32,7 +28,7 @@
     </div>
 
     <div class="item item-2">
-        <div class="box" style="background:#ff5757; ">
+        <div class="box" >
             <h2>页面三</h2>
         </div>
         <!--可自定义背景图-->
@@ -40,7 +36,7 @@
     </div>
 
     <div class="item item-3">
-        <div class="box" style="background:#851941; ">
+        <div class="box" >
             <h2>页面四</h2>
         </div>
         <!--可自定义背景图-->
@@ -48,8 +44,9 @@
     </div>
 
     <div class="item item-4">
-        <div class="box" style="background:#1693a7; ">
+        <div class="box" >
             <h2>页面五</h2>
+            <p class="页面内容"></p>
         </div>
         <!--可自定义背景图-->
         <div class="bg"></div>
@@ -88,11 +85,8 @@
 <script src="../src/QSwipe.js"></script>
 <script type="text/javascript">
     $('.item').QSwipe({
-        mode:"horizonal",
-        effect:"normal",
-        onTouchMoveFunc:function(mySwipe){
-            console.dir("mySwipe.distX="+mySwipe.distX+",mySwipe.distY="+mySwipe.distY);
-        }
+        mode:"vertical",
+        effect:"scale"
     });
 </script>
 

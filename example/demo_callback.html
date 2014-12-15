@@ -1,0 +1,107 @@
+﻿<!doctype html>
+<html lang="zh-cn">
+<head>
+<meta charset="utf-8" />
+<title>翻页模板 - QQ音乐</title>
+<meta name="format-detection" content="telephone=no" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<link rel="stylesheet" href="style/index.css" />
+<style type="text/css">
+.item{-webkit-transform:translateX(100%);}
+.item-0 {-webkit-transform: translateX(0);}
+.tip_con{ position: fixed; bottom: 5%; left: 5%; font-size: 14px; color: #fff; background: #ff4d15; width: 90%; height: 30px; line-height: 30px; z-index: 999; }
+</style>
+</head>
+<body>
+<div id="wrap"><div id="loading"><div style="width: 50%;"></div></div></div>
+
+<div class="wrap">
+    <div class="item item-0">
+        <div class="box">
+            <h2>页面一</h2>
+        </div>
+        <!--可自定义背景图-->
+        <div class="bg"></div>
+    </div>
+
+    <div class="item item-1">
+        <div class="box" >
+            <h2>页面二</h2>
+        </div>
+        <!--可自定义背景图-->
+        <div class="bg"></div>
+    </div>
+
+    <div class="item item-2">
+        <div class="box" >
+            <h2>页面三</h2>
+        </div>
+        <!--可自定义背景图-->
+        <div class="bg"></div>
+    </div>
+
+    <div class="item item-3">
+        <div class="box" >
+            <h2>页面四</h2>
+        </div>
+        <!--可自定义背景图-->
+        <div class="bg"></div>
+    </div>
+
+    <div class="item item-4">
+        <div class="box" >
+            <h2>页面五</h2>
+            <p class="页面内容"></p>
+        </div>
+        <!--可自定义背景图-->
+        <div class="bg"></div>
+    </div>
+</div>
+
+<div class="tip_con" id="tip_con">
+
+</div>
+
+
+<!--控制  包括翻页点样式 分享图标音乐图标-->
+<div class="mod_control firstScr" style="display:;">
+    <ul class="mod_tag" id="mod-tag-page">
+        <li class="current"><span>1</span></li>
+        <li><span>2</span></li>
+        <li><span>3</span></li>
+        <li><span>4</span></li>
+        <li><span>5</span></li>
+        <li><span>6</span></li>
+        <li><span>7</span></li>
+        <li><span>8</span></li>
+        <li><span>9</span></li>
+    </ul>
+    <a href="javascript:;" class="btn_favorite" id="btn_favorite"><i></i></a>
+    <div class="mod_start"><i></i></div>
+    <a class="btn_share" href="javascript:;">分享活动</a>
+
+</div>
+
+
+<!--播放控制-->
+<a href="#" class="audio_btn icon_sound_on" id="btn_audio" style="display:none"></a>
+<!--将icon_sound_on 样式名改为 icon_sound_off 即可设置成静音 -->
+
+<div id="share_btn_tip" class="mod_share" style="bottom:14px;right:10px;display:none">点击这里分享<i id="arrow_top" style="display:none" class="top"></i><i style="display:none" id="arrow_bottom" class="bottom"></i></div>
+
+<!--页面调用JS库-Zepto  -->
+<script src="../src/zepto.js"></script>
+<script src="../src/QSwipe.js"></script>
+<script type="text/javascript">
+    $('.item').QSwipe({
+        mode:"vertical",
+        effect:"cubeout",
+        onTouchMoveFunc:function(mySwipe){
+            $("#tip_con").html("当前为第 "+mySwipe.index+" 页，偏移量为X："+mySwipe.distX+",y:"+mySwipe.distY);
+        }
+    });
+</script>
+
+
+</body>
+</html>

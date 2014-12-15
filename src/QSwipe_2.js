@@ -106,10 +106,6 @@
 
             });
 
-            $(document).on('touchmove', function (evt) {
-                evt.preventDefault();
-            });
-
 
             function onTouchStart(event) {
 
@@ -549,6 +545,92 @@
 
             }
 
+            // "cube" 系列转场效果辅助功能入口
+            function cubingEffect(cubingVal,opaVal,currentVal,siblingVal){
+                var curTransformVal,sibTransformVal,curTransOrigin,sibTransOrigin;
+
+                // if(_way==="up"){
+                //     sibTransOrigin="50% 0%";
+                //     curTransOrigin="50% 100%";
+                //     sibTransformVal= "translate(0,"+(_height+siblingVal)+"px) rotateX(" + (cubingVal-90) + "deg)"
+                //     curTransformVal="translate(0,"+(currentVal)+"px)  rotateX(" + cubingVal + "deg)";
+                // }else if(_way==="down"){
+                //     sibTransOrigin="50% 100%";
+                //     curTransOrigin="50% 0%";
+                //     sibTransformVal= "translate(0,"+(siblingVal-_height)+"px) rotateX(" + (90-cubingVal) + "deg)"
+                //     curTransformVal="translate(0,"+(currentVal)+"px)  rotateX(" + (-cubingVal) + "deg)";
+                // }else if(_way=="left"){
+                //     sibTransOrigin="0% 50%";
+                //     curTransOrigin="100% 50%";
+                //     sibTransformVal= "translate("+(_width+siblingVal)+"px,0) rotateY(" + (90-cubingVal) + "deg)"
+                //     curTransformVal="translate("+(currentVal)+"px,0)  rotateY(" + (-cubingVal) + "deg)"; 
+                // }else if(_way=="right"){
+                //     sibTransOrigin="100% 50%";
+                //     curTransOrigin="0% 50%";
+                //     sibTransformVal= "translate("+(siblingVal-_width)+"px,0) rotateY(" + (cubingVal-90) + "deg)"
+                //     curTransformVal="translate("+(currentVal)+"px,0)  rotateY(" + (cubingVal) + "deg)"; 
+                // }
+
+
+                
+
+                _curElement.css({
+                    '-webkit-transition' : 'none',
+                    '-webkit-transform' : curTransformVal,
+                    '-webkit-transform-origin' : curTransOrigin,
+                    'transform-style': "preserve-3d",
+                    "z-index":"999",
+                    'opacity' : "1"
+                });
+
+                _siblingElement.css({
+                    '-webkit-transition' : 'none',
+                    '-webkit-transform' : sibTransformVal,
+                    '-webkit-transform-origin' : sibTransOrigin,
+                    "z-index":"9",
+                    'opacity' : Math.max(1-opaVal,0.6)
+                });
+
+
+            }
+
+
+            function initCubePos(){
+                if(_way==="up"){
+                    _this.css({
+                        "-webkit-transform":"translate(0,-100%)"
+                    });
+                    _curElement.css({
+                        "-webkit-transform":"translate(0,0)"
+                    });
+
+                }else if(_way==="down"){
+                    _this.css({
+                        "-webkit-transform":"translate(0,100%)"
+                    });
+                    _curElement.css({
+                        "-webkit-transform":"translate(0,0)"
+                    });
+
+                }else if(_way==="left"){
+                    _this.css({
+                        "-webkit-transform":"translate(-100%,0) rotateX(90deg)"
+                    });
+                    _curElement.css({
+                        "-webkit-transform":"translate(0,0)"
+                    });
+
+                }else if(_way==="right"){
+                    _this.css({
+                        "-webkit-transform":"translate(100%,0) rotateX(-90deg)"
+                    });
+                    _curElement.css({
+                        "-webkit-transform":"translate(0,0)"
+                    });
+
+                }
+            }
+
             // "cubeout" 转场效果辅助功能入口
             function moveWithCubeOutTran(event,currentVal,siblingVal){
                 var dist=refreshElement(currentVal,initPos);
@@ -645,6 +727,26 @@
                     }
 
                 }
+            }
+
+            // "cubein" 转场效果主功能入口
+            function moveWithCubeInTran(event,currentVal,siblingVal){
+                var dist=refreshElement(currentVal,initPos);
+                if(!dist){   return;}
+                
+                var cubingVal,guleVal,opaVal,totalPenc;
+                if(_isV){
+                    totalPenc=Math.abs(dist)/_height;
+                }else{
+                    totalPenc=Math.abs(dist)/_width;
+                }
+                cubingVal=totalPenc*90;
+                opaVal=Math.min(totalPenc,0.8);
+                _isMoving = true;
+                cubingEffect(cubingVal,opaVal,currentVal,siblingVal);
+
+                
+
             }
 
             //触屏结束时出发转场效果

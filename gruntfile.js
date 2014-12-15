@@ -46,7 +46,7 @@ module.exports = function(grunt) {
                     ' * Released on: <%= grunt.template.today("mmmm d, yyyy") %>\n' +
                     '*/\n',
                 report: "min",//输出压缩率，可选的值有 false(不输出信息)，gzip
-                preserveComments: 'all' //不删除注释，还可以为 false（删除全部注释），some（保留@preserve @license @cc_on等注释）
+                preserveComments: false //不删除注释，还可以为 false（删除全部注释），some（保留@preserve @license @cc_on等注释）
             },
             build: {
                 src: 'src/<%=pkg.file %>.js',
